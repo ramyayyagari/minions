@@ -6,7 +6,7 @@ from minions.clients.openai import OpenAIClient
 from minions.clients.anthropic import AnthropicClient
 from minions.clients.together import TogetherClient
 from minions.clients.groq import GroqClient
-from minions.clients.mlx_lm import MLXLMClient
+# from minions.clients.mlx_lm import MLXLMClient
 from minions.clients.perplexity import PerplexityAIClient
 from minions.clients.openrouter import OpenRouterClient
 from minions.minions_mcp import SyncMinionsMCP, MCPConfigManager
@@ -400,14 +400,14 @@ def main():
     parser.add_argument(
         "--mcp-config",
         type=str,
-        default="",
+        default=None,
         help="Path to MCP config file"
     )
     args = parser.parse_args()
 
     # Handle MCP server listing (if config file is specified)
     if args.list_mcp_servers:
-        config_manager = MCPConfigManager(config_path=args.list_mcp_servers)
+        config_manager = MCPConfigManager(config_path=args.mcp_config)
         servers = config_manager.list_servers()
         if servers:
             print("Available MCP servers:")
@@ -515,11 +515,11 @@ def main():
     if args.use_mcp:
         # Initialize with MCP
         print(f"Initializing with MCP server: {args.mcp_server}")
-        
+
         protocol = SyncMinionsMCP(
             local_client=local_client,
             remote_client=remote_client,
-            mcp_config_path=args.mcp_config if args.mcp_config else None,
+            mcp_config_path=args.mcp_config,
             mcp_server_name=args.mcp_server,
             callback=message_callback,
         )
