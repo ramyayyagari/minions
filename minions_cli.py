@@ -387,11 +387,10 @@ def main():
         help="Use MCP tools"
     )
     parser.add_argument(
-        "--mcp-servers", 
-        nargs="+",
+        "--mcp-server", 
         type=str, 
-        default=[], 
-        help="List of MCP server names"
+        default="filesystem", 
+        help="MCP server name"
     )
     parser.add_argument(
         "--list-mcp-servers", 
@@ -515,14 +514,13 @@ def main():
     # Create the appropriate protocol based on arguments
     if args.use_mcp:
         # Initialize with MCP
-        print(f"Initializing with MCP server: {args.mcp_servers[0] if args.mcp_servers else 'filesystem'}")
-        mcp_server_name = args.mcp_servers[0] if args.mcp_servers else "filesystem"
+        print(f"Initializing with MCP server: {args.mcp_server}")
         
         protocol = SyncMinionsMCP(
             local_client=local_client,
             remote_client=remote_client,
             mcp_config_path=args.mcp_config if args.mcp_config else None,
-            mcp_server_name=mcp_server_name,
+            mcp_server_name=args.mcp_server,
             callback=message_callback,
         )
     else:
