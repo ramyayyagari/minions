@@ -9,6 +9,7 @@ from minions.clients.groq import GroqClient
 from minions.clients.mlx_lm import MLXLMClient
 from minions.clients.perplexity import PerplexityAIClient
 from minions.clients.openrouter import OpenRouterClient
+from minions.minions_mcp import SyncMinionsMCP, MCPConfigManager
 import time
 import argparse
 import fitz  # PyMuPDF for PDF handling
@@ -380,7 +381,42 @@ def main():
     parser.add_argument(
         "--doc-metadata", type=str, default="", help="Metadata describing the document"
     )
+    parser.add_argument(
+        "--use-mcp",
+        action="store_true",
+        help="Use MCP tools"
+    )
+    parser.add_argument(
+        "--mcp-servers", 
+        nargs="+",
+        type=str, 
+        default=[], 
+        help="List of MCP server names"
+    )
+    parser.add_argument(
+        "--list-mcp-servers", 
+        action="store_true",
+        help="List available MCP servers and exit"
+    )
+    parser.add_argument(
+        "--mcp-config",
+        type=str,
+        default="",
+        help="Path to MCP config file"
+    )
     args = parser.parse_args()
+
+    # Handle MCP server listing (if config file is specified)
+    if args.list_mcp_servers:
+        config_manager = MCPConfigManager(config_path=args.list_mcp_servers)
+        servers = config_manager.list_servers()
+        if servers:
+            print("Available MCP servers:")
+            for server in servers:
+                print(f"  - {server}")
+        else:
+            print("No MCP servers found in config")
+        return
 
     # Get model configuration from environment variables
     local_model_env = os.environ.get("MINIONS_LOCAL", "ollama/llama3.2")
@@ -454,7 +490,7 @@ def main():
         )
         print(f"Estimated tokens: {estimated_tokens}")
         print(f"Using context window: {num_ctx}")
-
+        
     # Initialize the local client
     print(f"Initializing local client with {local_provider}/{local_model_name}")
     local_client = initialize_client(
@@ -475,13 +511,27 @@ def main():
         temperature=remote_temperature,
         max_tokens=remote_max_tokens,
     )
-
-    # Instantiate the protocol object with the clients
-    print(f"Initializing {args.protocol} protocol")
-    if args.protocol == "minions":
-        protocol = Minions(local_client, remote_client, callback=message_callback)
-    else:  # minion
-        protocol = Minion(local_client, remote_client, callback=message_callback)
+    
+    # Create the appropriate protocol based on arguments
+    if args.use_mcp:
+        # Initialize with MCP
+        print(f"Initializing with MCP server: {args.mcp_servers[0] if args.mcp_servers else 'filesystem'}")
+        mcp_server_name = args.mcp_servers[0] if args.mcp_servers else "filesystem"
+        
+        protocol = SyncMinionsMCP(
+            local_client=local_client,
+            remote_client=remote_client,
+            mcp_config_path=args.mcp_config if args.mcp_config else None,
+            mcp_server_name=mcp_server_name,
+            callback=message_callback,
+        )
+    else:
+        # Instantiate the standard protocol object with the clients
+        print(f"Initializing {args.protocol} protocol")
+        if args.protocol == "minions":
+            protocol = Minions(local_client, remote_client, callback=message_callback)
+        else:  # minion
+            protocol = Minion(local_client, remote_client, callback=message_callback)
 
     setup_time = time.time() - setup_start_time
     print(f"Setup completed in {setup_time:.2f} seconds")
