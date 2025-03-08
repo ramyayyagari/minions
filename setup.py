@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "ollama",  # for local LLM
-        "streamlit",  # for the UI
+        "streamlit==1.42.2",  # for the UI
         "openai",  # for OpenAI client
         "anthropic",  # for Anthropic client
         "together",  # for Together client
@@ -20,6 +20,9 @@ setup(
         "rank_bm25",  # for smart retrieval
         "PyMuPDF",  # for PDF handling
     ],
+    extras_require={
+        "mlx": ["mlx-lm"],
+    },
     author="Sabri, Avanika, and Dan",
     description="A package for running minion protocols with local and remote LLMs",
     python_requires=">=3.8",

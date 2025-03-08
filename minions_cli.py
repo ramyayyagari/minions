@@ -6,10 +6,10 @@ from minions.clients.openai import OpenAIClient
 from minions.clients.anthropic import AnthropicClient
 from minions.clients.together import TogetherClient
 from minions.clients.groq import GroqClient
-# from minions.clients.mlx_lm import MLXLMClient
 from minions.clients.perplexity import PerplexityAIClient
 from minions.clients.openrouter import OpenRouterClient
 from minions.minions_mcp import SyncMinionsMCP, MCPConfigManager
+from minions.clients.deepseek import DeepSeekClient
 import time
 import argparse
 import fitz  # PyMuPDF for PDF handling
@@ -20,6 +20,15 @@ import readline
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Union, Any
 import re
+
+# Conditionally import MLXLMClient
+try:
+    from minions.clients.mlx_lm import MLXLMClient
+
+    MLX_AVAILABLE = True
+except ImportError:
+    MLX_AVAILABLE = False
+    print("Warning: mlx_lm is not installed. MLX models will not be available.")
 
 
 def extract_text_from_file(file_path):
@@ -300,10 +309,19 @@ def initialize_client(
         return OpenRouterClient(
             model_name=model_name, temperature=temperature, max_tokens=max_tokens
         )
-    elif provider == "mlx":
-        return MLXLMClient(
+    elif provider == "deepseek":
+        return DeepSeekClient(
             model_name=model_name, temperature=temperature, max_tokens=max_tokens
         )
+    elif provider == "mlx":
+        if MLX_AVAILABLE:
+            return MLXLMClient(
+                model_name=model_name, temperature=temperature, max_tokens=max_tokens
+            )
+        else:
+            raise ImportError(
+                "MLX client is not available. Please install mlx-lm with 'pip install mlx-lm'"
+            )
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 

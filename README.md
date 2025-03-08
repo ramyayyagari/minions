@@ -31,6 +31,14 @@ cd minions
 pip install -e .  # installs the minions package in editable mode
 ```
 
+_note_: for optional MLX-LM install the package with the following command:
+
+```bash
+pip install -e ".[mlx]"
+```
+
+_note_: for optional Cartesia-MLX install, pip install the basic package and then follow the instructions below.
+
 **Step 2:** Install a server for running the local model.
 
 We support two servers for running local models: `ollama` and `tokasaurus`. You need to install at least one of these.
@@ -64,15 +72,6 @@ pip install git+https://github.com/cartesia-ai/edge.git#subdirectory=cartesia-me
 
 ```
 pip install git+https://github.com/cartesia-ai/edge.git#subdirectory=cartesia-mlx
-```
-
-</details><br>
-
-<details>
-    <summary>Optional: Install MLX-LM (only available on Apple Silicon)</summary>
-
-```bash
-pip install mlx-lm
 ```
 
 </details><br>
@@ -200,12 +199,53 @@ To run Minion/Minions in a notebook, checkout `minions.ipynb`.
 
 To run Minion/Minions in a CLI, checkout `minions_cli.py`.
 
+Set your choice of local and remote models by running the following command. The format is `<provider>/<model_name>`. Choice of providers are `ollama`, `openai`, `anthropic`, `together`, `perplexity`, `openrouter`, `groq`, and `mlx`.
+
+```bash
+export MINIONS_LOCAL=ollama/llama3.2
+export MINIONS_REMOTE=openai/gpt-4o
+```
+
 ```bash
 minions --help
 ```
 
 ```bash
 minions --context <path_to_context> --protocol <minion|minions>
+```
+
+## Miscellaneous Setup
+
+### Using Azure OpenAI with Minions
+
+#### Set Environment Variables
+```bash
+export AZURE_OPENAI_API_KEY=your-api-key
+export AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com/
+export AZURE_OPENAI_API_VERSION=2024-02-15-preview
+```
+
+#### Example Code
+Here's an example of how to use Azure OpenAI with the Minions protocol in your own code:
+
+```python
+from minions.clients.ollama import OllamaClient
+from minions.clients.azure_openai import AzureOpenAIClient
+from minions.minion import Minion
+
+local_client = OllamaClient(
+    model_name="llama3.2",
+)
+
+remote_client = AzureOpenAIClient(
+    model_name="gpt-4o",  # This should match your deployment name
+    api_key="your-api-key",
+    azure_endpoint="https://your-resource-name.openai.azure.com/",
+    api_version="2024-02-15-preview",
+)
+
+# Instantiate the Minion object with both clients
+minion = Minion(local_client, remote_client)
 ```
 
 ## Maintainers
