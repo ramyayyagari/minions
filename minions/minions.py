@@ -513,8 +513,33 @@ class Minions:
             local_usage += usage
 
             def extract_job_output(response: str) -> JobOutput:
-                output = JobOutput.model_validate_json(response)
-                return output
+                try:
+                    output = JobOutput.model_validate_json(response)
+                    return output
+                except Exception:
+                    # Invalid JSON, try to parse response instead
+                    try:
+                        # Use regex to extract relevant values
+                        explanation_match = re.search(r'explanation\s*=\s*"([^"]*)"', response)
+                        citation_match = re.search(r'citation\s*=\s*"([^"]*)"', response)
+                        answer_match = re.search(r'answer\s*=\s*"([^"]*)"', response)
+                        
+                        explanation = explanation_match.group(1).replace('\\n', '\n') if explanation_match else None
+                        citation = citation_match.group(1).replace('\\n', '\n') if citation_match else None
+                        answer = answer_match.group(1).replace('\\n', '\n') if answer_match else None
+                        
+                        return JobOutput(
+                            explanation=explanation,
+                            citation=citation,
+                            answer=answer
+                        )
+                    except Exception as e:
+                        # Fallback for any parsing errors
+                        return JobOutput(
+                            answer=None,
+                            explanation=f"Failed to parse response: {str(e)}",
+                            citation=None
+                        )
 
             jobs: List[Job] = []
             for worker_messages, sample, job_manifest, done_reason in zip(
@@ -678,7 +703,6 @@ class Minions:
                     synthesized_response, usage = self.remote_client.chat(
                         supervisor_messages, response_format={"type": "json_object"}
                     )
-
                     # Parse and validate JSON response
                     response_text = synthesized_response[0]
                     print(

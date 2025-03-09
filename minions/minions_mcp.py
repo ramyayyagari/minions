@@ -206,7 +206,7 @@ class SyncMCPClient:
             and "~" in kwargs["path"]
         ):
             kwargs["path"] = os.path.expanduser(kwargs["path"])
-
+        
         print(f"Executing tool {tool_name} with args: {kwargs}")
 
         # Add request to queue
@@ -236,6 +236,7 @@ class SyncMCPToolExecutor:
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
         """Execute an MCP tool synchronously"""
+        breakpoint()
         output = self.mcp_client.execute_tool(tool_name, **kwargs)
         return self.mcp_client.format_output(output)
 

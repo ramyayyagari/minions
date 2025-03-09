@@ -533,7 +533,7 @@ def main():
     if args.use_mcp:
         # Initialize with MCP
         print(f"Initializing with MCP server: {args.mcp_server}")
-
+        
         protocol = SyncMinionsMCP(
             local_client=local_client,
             remote_client=remote_client,
